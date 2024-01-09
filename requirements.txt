@@ -56,3 +56,9 @@ typing_extensions==4.9.0
 urllib3==2.1.0
 wsproto==1.2.0
 yarl==1.9.4
+
+langchain~=0.1.0
+
+transformers~=4.36.2
+spellchecker~=0.4
+torch~=2.1.2

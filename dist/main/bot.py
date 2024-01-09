@@ -31,6 +31,7 @@ from spellchecker import SpellChecker
 # Load model directly
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
+
 tokenizer = AutoTokenizer.from_pretrained("KoalaAI/Text-Moderation")
 model = AutoModelForSequenceClassification.from_pretrained("KoalaAI/Text-Moderation")
 
