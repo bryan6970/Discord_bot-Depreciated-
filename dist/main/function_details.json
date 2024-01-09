@@ -1,0 +1,9 @@
+{"SETX":  {"Definition":"`!SETX <APP NAME> <PARAMETER> <PARAMETER>`. Note that the number of parameters can be more or less than 2. App names currently include `<VALTRACKER>`","min_role_id":  null, "min_role_name":  null},
+"val": {"Definition": "`!val MAIN_PARAM SUB_PARAM` Main params include playtime, comp, unranked. Sub params include accuracy, top weapons, hs%, top agents. Without a Subparam, you will get the full screenshot. Setup with `SETX <VALTRACKER> <IN GAME NAME> <RIOT ID>` ","min_role_id":  null,"min_role_name":  null},
+"gpt3":{"Definition": "`!gpt3 <QUERY>` Ask GPT3 a question","min_role_id":  null},
+"gpt4": {"Definition":"`!gpt4 <QUERY>` Ask GPT4 a question. Image upload should be supported soon","min_role_id":  1176443510409396294, "min_role_name":  "topG"},
+"OFF": {"Definition":"`!OFF <FEATURE>` Turn off a feature. Features include `bot_responses_fun`","min_role_id":  1176470307960258620, "min_role_name":  "admin"},
+"ON": {"Definition":"`!ON <FEATURE>` Turn on a feature. Features include  `bot_responses_fun`","min_role_id":  1176470307960258620,"min_role_name":  "admin"},
+"timeout": {"Definition":"`!timeout <MEMBER> <SECONDS> <MINUTES> <HOURS> <DAYS> <REASON>`. Timeouts a user for a specific time. Duration is calculated based on the seconds, minutes, hours, and days provided. Reason is optional","min_role_id":  1176470307960258620,"min_role_name":  "admin"},
+  "set_value":{"Definition":"`!set_value <*PATH> <VALUE>. Changes the value of a parameter in the path. This is used to change value in the bot data section.","min_role_id":  1176470307960258620,"min_role_name":  "admin"}
+}

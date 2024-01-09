@@ -1,0 +1,13 @@
+{"SETX":  {"role_id": null, "permissions" : null},
+"val":  {"role_id": null, "permissions" : null},
+"jokes": {"role_id": null, "permissions" : null},
+"gpt3": {"role_id": null, "permissions" : "administrator"},
+"gpt4": {"role_id": null, "permissions" : "administrator"},
+"gpt4_vision": {"role_id": null, "permissions" : "administrator"},
+"OFF":  {"role_id": null, "permissions" : "administrator"},
+"ON":  {"role_id": null, "permissions" : "administrator"},
+"commands":  {"role_id": null, "permissions" : "administrator"},
+"funcs":  {"role_id": null, "permissions" : "administrator"},
+"timeout": {"role_id": null, "permissions" : "administrator"},
+"add_role": {"role_id": null, "permissions" : "administrator"},
+"remove_role": {"role_id": null, "permissions" : "administrator"}}
