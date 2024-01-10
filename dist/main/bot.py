@@ -1,4 +1,3 @@
-import datetime
 import functools
 import io
 import json
@@ -19,8 +18,8 @@ from colorama import Fore, Style
 from discord import Intents, Member
 from discord.ext import commands
 from langchain.tools import Tool
-from langchain.utilities import GoogleSearchAPIWrapper
-from langchain.utilities.google_search import GoogleSearchAPIWrapper
+from langchain_community.utilities import GoogleSearchAPIWrapper
+from langchain_community.utilities.google_search import GoogleSearchAPIWrapper
 from openai import OpenAI
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -31,18 +30,17 @@ from spellchecker import SpellChecker
 # Load model directly
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
-
+# For auto moderation
 tokenizer = AutoTokenizer.from_pretrained("KoalaAI/Text-Moderation")
 model = AutoModelForSequenceClassification.from_pretrained("KoalaAI/Text-Moderation")
 
-spell = SpellChecker()
-[spell.word_frequency.add(word) for word in ["SETX", "$val", "<valtracker>", "bruh"]]
-
+# Get all discord intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True
 
+# Common IDs
 test_channel_id = 1176446310015041618
 admin_channel_id = 1180059589413183498
 
@@ -62,25 +60,21 @@ FileEntry = Dict[str, Union[Dict[str, str], MessageOrNone, str, bool]]
 NecessaryFilesDict = Dict[str, FileEntry]
 
 necessary_files: NecessaryFilesDict = {
-    "hyperparams": {"data": {}, "message": None, "filename": "hyperparams.json", "found": False},
-    "openai_api": {"data": {}, "message": None, "filename": "openai_api.txt", "found": False},
-    "function_permissions": {"data": {}, "message": None, "filename": "function_permissions.json", "found": False},
-    "member_details": {"data": {}, "message": None, "filename": "member_details.json", "found": False},
+    "hyperparams": {"data": {}, "message": MessageOrNone, "filename": "hyperparams.json", "found": False},
+    "openai_api": {"data": {}, "message": MessageOrNone, "filename": "openai_api.txt", "found": False},
+    "function_permissions": {"data": {}, "message": MessageOrNone, "filename": "function_permissions.json",
+                             "found": False},
+    "member_details": {"data": {}, "message": MessageOrNone, "filename": "member_details.json", "found": False},
 }
 
-bot_data_channel: discord.TextChannel = None
+bot_data_channel: discord.TextChannel = Union[discord.TextChannel, None]
 
+# If a guild has been initialised
 ready = False
 
-timeout_duration = datetime.timedelta(seconds=60)
-
+# Load common file
 with open("function_details.json", "r") as f:
     function_details = json.load(f)
-
-with open("function_permissions.json") as f:
-    function_permissions = json.load(f)
-with open("hyperparams.json") as f:
-    hyperparams = json.load(f)
 
 
 def print_red(text):
@@ -91,6 +85,9 @@ def neat_print(dictionary, heading1, heading2):
     # Determine the length of the longest word in each column
     len1 = max(len(heading1), max((len(str(key)) for key in dictionary.keys()), default=0))
     len2 = max(len(heading2), max((len(str(value)) for value in dictionary.values()), default=0))
+
+    len1 += 1
+    len2 += 2
 
     # Print the table headings
     print(f"{heading1:<{len1}} | {heading2:<{len2}}")
@@ -103,6 +100,7 @@ def neat_print(dictionary, heading1, heading2):
 
 
 def correct_spelling(text):
+    raise NotImplementedError
     spell_ = spell
     words = text.split()
 
@@ -119,7 +117,7 @@ def correct_spelling(text):
 
 
 class GPT:
-    openai_api_key = "this is not a valid api key"
+    openai_api_key = Union[None, str]
 
     @staticmethod
     def _Google_search(Query, k):
@@ -346,7 +344,9 @@ class GetTrackerInfo:
 
         response = ""
 
-        corrected_spelling = [correct_spelling(keyword).lower() for keyword in keywords]
+        # corrected_spelling = [correct_spelling(keyword).lower() for keyword in keywords]
+
+        corrected_spelling = [(keyword).lower() for keyword in keywords]
 
         if not message.mentions:
             id_name_dict = {message.author.id: message.author.global_name}
@@ -452,16 +452,6 @@ async def has_permission(func):
     return await discord.ext.commands.check(predicate)
 
 
-def preserve_metadata(func):
-    return func
-
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        return await func(*args, **kwargs)
-
-    return wrapper
-
-
 def compare_and_remove_keys(dict1, dict2):
     keys_to_remove = [key for key in dict1.keys() if key not in dict2]
 
@@ -541,7 +531,7 @@ async def val(ctx, *keywords):
 
 @has_permission
 @client.command()
-## needs to be changed to put data in discord chat
+# needs to be changed to put data in discord chat
 async def SETX(ctx, app_name, *params):
     if app_name.upper() == "VALTRACKER":
         if len(params) != hyperparams["Val_vars"]:
@@ -584,49 +574,52 @@ async def gpt4_vision(ctx):
     await temp_message.delete()
 
 
+async def set_value_(ctx, *args) -> discord.Message:
+    print(necessary_files["hyperparams"]["data"])
+    path = [args[0], "data"] + list(args[1:-1])
+    value = args[-1]
+    current = necessary_files
+
+    for key in path[:-1]:
+        if key in current:
+            current = current[key]
+        else:
+            await ctx.message.channel.send(f"Key path not found. Search stopped at {key}")
+            return
+
+    else:
+        last_key = path[-1]
+        if last_key in current:
+            # Modify the value at the last key
+            current[last_key] = value
+            print(f"Value at key path {path} modified.")
+        else:
+            await ctx.message.channel.send(f"Final key: \"{last_key}\" in key path not found.")
+            return
+
+    try:
+
+        await save_json_files(necessary_files[path[0]]["message"], necessary_files[path[0]]["filename"],
+                              necessary_files[path[0]]['data'])
+    except KeyError as e:
+        raise e
+
+    print("sending return message")
+    await ctx.message.channel.send(f"Key at {path} has been set to {value}")
+
+
 @has_permission
 @client.command()
 async def OFF(ctx, feature: str):
-    if feature == "bot_responses_fun":
-        client.bot_responses_fun = False
-        hyperparams["bot responses fun"] = False
-        await ctx.send("bot responses fun turned OFF")
-
-    message = necessary_files["hyperparams"]["message"]
-    attachments = []
-    for attachment in message.attachments:
-        if attachment.filename != "hyperparams.json":
-            file = await attachment.to_file()
-            attachments.append(file)
-
-    json_file = json.dumps(hyperparams, indent=4)
-    attachments.append(discord.File(json_file, filename="hyperparams.json"))
-
-    await message.delete()
-    await bot_data_channel.send(files=attachments)
+    print("func called")
+    await set_value_(ctx, "hyperparams", feature, False)
 
 
 @has_permission
 @client.command()
 async def ON(ctx, feature: str):
-    if ctx.channel.id == admin_channel_id:
-        if feature == "bot_responses_fun":
-            client.bot_responses_fun = True
-            hyperparams["bot responses fun"] = True
-            await ctx.send("bot responses fun turned ON")
-
-    message = necessary_files["hyperparams"]["message"]
-    attachments = []
-    for attachment in message.attachments:
-        if attachment.filename != "hyperparams.json":
-            file = await attachment.to_file()
-            attachments.append(file)
-
-    json_file = json.dumps(hyperparams, indent=4)
-    attachments.append(discord.File(json_file, filename="hyperparams.json"))
-
-    await message.delete()
-    await bot_data_channel.send(files=attachments)
+    print("func called")
+    await set_value_(ctx, "hyperparams", feature, True)
 
 
 @has_permission
@@ -639,8 +632,6 @@ async def timeout(ctx, member: Member, seconds: int = 0, minutes: int = 0, hours
     await ctx.send(f'{member.mention} was timeouted for {duration}', ephemeral=True)
 
 
-@has_permission
-@client.command()
 async def jokes(ctx):
     if ctx.message.content.startswith('hehe'):
         await ctx.message.channel.send("chelsea best Tottenham suck")
@@ -672,7 +663,7 @@ async def jokes(ctx):
 
 @has_permission
 @client.command()
-async def set_value(ctx, *args):
+async def set_value(ctx, *args) -> discord.Message:
     path = [args[0], "data"] + list(args[1:-1])
     value = args[-1]
     current = necessary_files
@@ -681,7 +672,7 @@ async def set_value(ctx, *args):
         if key in current:
             current = current[key]
         else:
-            await ctx.message.channel.send (f"Key path not found. Search stopped at {key}")
+            await ctx.message.channel.send(f"Key path not found. Search stopped at {key}")
             return
 
     else:
@@ -707,19 +698,19 @@ async def set_value(ctx, *args):
 
 @has_permission
 @client.command()
-async def add_role(ctx, member: discord.Member, role: discord.Role):
+async def add_role(ctx, member: discord.Member, role: discord.Role) -> None:
     await member.add_roles(role)
     await ctx.send(f"Added {role.name} to {member.display_name}")
 
 
 @has_permission
 @client.command()
-async def remove_role(ctx, member: discord.Member, role: discord.Role):
+async def remove_role(ctx, member: discord.Member, role: discord.Role) -> None:
     await member.remove_roles(role)
     await ctx.send(f"Removed {role.name} from {member.display_name}")
 
 
-async def save_json_files(old_message: discord.Message, filename, file_):
+async def save_json_files(old_message: discord.Message, filename: str, file_data: dict) -> discord.Message:
     attachments = []
 
     for attachment in old_message.attachments:
@@ -728,7 +719,7 @@ async def save_json_files(old_message: discord.Message, filename, file_):
             file = await attachment.to_file()
             attachments.append(file)
 
-    json_file = io.StringIO(json.dumps(file_, indent=4))
+    json_file = io.StringIO(json.dumps(file_data, indent=4))
     attachments.append(discord.File(json_file, filename=filename))
 
     message_ = await bot_data_channel.send(files=attachments)
@@ -877,7 +868,6 @@ async def on_message(message):
 
                 channel = await ctx.guild.create_text_channel("bot-data", overwrites=overwrites)
 
-                channel = await ctx.guild.create_text_channel("bot-data")
             bot_data_channel = channel
             member_details = await member_ids(ctx.guild)
             print(member_details)
@@ -915,11 +905,14 @@ async def on_message(message):
                 f'Your message "{message.content}" was flagged by our moderation system. Please remember to '
                 'keep the server safe for everyone.')
             if necessary_files["hyperparams"]['data']["logging_channel_id"]:
-                await ctx.guild.get_channel(necessary_files["hyperparams"]['data']["logging_channel_id"]).send(f'"{message.content}" was flagged. User was {member.nick}')
+                await ctx.guild.get_channel(int(necessary_files["hyperparams"]['data']["logging_channel_id"])).send(
+                    f'"{message.content}" was flagged. User was {member.nick}')
         else:
             print(f"{outputs[0]['label']} score {round(outputs[0]['score'], 2)}")
 
-        message.content = correct_spelling(message.content)
+        if necessary_files["hyperparams"]['data']["jokes"]:
+            await jokes(ctx)
+        # message.content = correct_spelling(message.content)
 
         if "nigger" not in message.content:
             message.content.replace("nig", "nigger")

@@ -1,7 +1,6 @@
 import pyautogui, time
 import pygame
 
-import pygame
 
 def play_partial_sound(sound_file_path, duration_seconds=5):
     pygame.mixer.init()
@@ -20,8 +19,6 @@ def play_partial_sound(sound_file_path, duration_seconds=5):
 
 
 
-play_partial_sound('mixkit-spaceship-alarm-998.wav')
-input()
 
 while True:
     pyautogui.moveTo(x=1102, y=521)
@@ -36,5 +33,4 @@ while True:
     if pyautogui.pixel(1165, 570) == (28, 206, 1):
         play_partial_sound('mixkit-spaceship-alarm-998.wav')
         input("On cooldown. Press any key to continue")
-        input()
         break
