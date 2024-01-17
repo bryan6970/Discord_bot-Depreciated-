@@ -59,7 +59,7 @@ FileEntry = Dict[str, Union[Dict[str, str], MessageOrNone, str, bool]]
 # Type hint for the entire dictionary
 NecessaryFilesDict = Dict[str, FileEntry]
 
-necessary_files: NecessaryFilesDict = {
+NecessaryFiles: NecessaryFilesDict = {
     "hyperparams": {"data": {}, "message": MessageOrNone, "filename": "hyperparams.json", "found": False},
     "openai_api": {"data": {}, "message": MessageOrNone, "filename": "openai_api.txt", "found": False},
     "function_permissions": {"data": {}, "message": MessageOrNone, "filename": "function_permissions.json",
@@ -424,19 +424,21 @@ class MyClient(commands.Bot, GPT, GetTrackerInfo, discord.Client):
 client = MyClient(intents=intents)
 
 
-async def has_permission(func):
+# Get this shit fixed
+def has_permission(coro):
     try:
-        details = function_permissions[func.__name__]
+        details = function_permissions[coro.__name__]
     except KeyError:
         print_red(
-            f"There is an error with the file function_permissions. {func.__name__} permissions are not found.")
+            f"There is an error with the file function_permissions. {coro.__name__} permissions are not found.")
         return False
 
-    @functools.wraps(func)
+    @functools.wraps(coro)
     def predicate(ctx):
         print("in wrapper")
         # Get the position of the specified role
         permissions = None
+
         try:
             role_position = discord.utils.get(ctx.guild.roles, id=details["role_id"]).position
         except:
@@ -445,11 +447,12 @@ async def has_permission(func):
             permissions = ctx.author.guild_permissions.__getattribute__(details["permissions"])
         except:
             pass
-        if permissions or any(role.position >= role_position for role in ctx.author.roles) or details[
-            "role_id"] == bryan_id:
+        if permissions:
             return True
 
-    return await discord.ext.commands.check(predicate)
+        return discord.ext.commands.check(predicate)
+
+    return predicate
 
 
 def compare_and_remove_keys(dict1, dict2):
@@ -487,34 +490,26 @@ async def on_command_error(ctx, error):
         await ctx.send(error)
 
 
-def second_decorator(coro):
-    print("function wrapped")
-
-    @functools.wraps(coro)  # Important to preserve name because `command` uses it
-    async def wrapper(*args, **kwargs):
-        print('wrapped function called')
-        return await coro(*args, **kwargs)
-
-    return wrapper
-
-
 @has_permission
 @client.command()
 async def commands(ctx):
     table = "Function | Definition\n---------|---------\n"
-    for func, details in function_details.items():
+    spaces = " " * max([len(func_name) for func_name in NecessaryFiles["function_details"]["data"].keys()])
+    for func_name, details in function_details.items():
         definition = details["Definition"]
 
         # Format the func to the correct length
-        func = func + (8 - len(func)) * " "
+        func_name = func_name + (8 - len(func_name)) * " "
 
         # Format the definition
-        definition = "".join([f"{sentence}.\n         |" for sentence in definition.split(".")])
+        definition = "".join([f"{sentence}.\n{spaces}|" for sentence in definition.split(".")])
+
+        definition += f'\n{spaces}|Permissions: {NecessaryFiles["function_permissions"]["data"][func_name]["permissions"]}\n'
 
         # Add extra new line
         definition = definition + "\n"
 
-        table += f"{func} | {definition}"
+        table += f"{func_name} | {definition}"
     await ctx.message.channel.send(f"```{table}```")
 
     return
@@ -575,10 +570,10 @@ async def gpt4_vision(ctx):
 
 
 async def set_value_(ctx, *args) -> discord.Message:
-    print(necessary_files["hyperparams"]["data"])
+    print(NecessaryFiles["hyperparams"]["data"])
     path = [args[0], "data"] + list(args[1:-1])
     value = args[-1]
-    current = necessary_files
+    current = NecessaryFiles
 
     for key in path[:-1]:
         if key in current:
@@ -599,8 +594,8 @@ async def set_value_(ctx, *args) -> discord.Message:
 
     try:
 
-        await save_json_files(necessary_files[path[0]]["message"], necessary_files[path[0]]["filename"],
-                              necessary_files[path[0]]['data'])
+        await save_json_files(NecessaryFiles[path[0]]["message"], NecessaryFiles[path[0]]["filename"],
+                              NecessaryFiles[path[0]]['data'])
     except KeyError as e:
         raise e
 
@@ -666,7 +661,7 @@ async def jokes(ctx):
 async def set_value(ctx, *args) -> discord.Message:
     path = [args[0], "data"] + list(args[1:-1])
     value = args[-1]
-    current = necessary_files
+    current = NecessaryFiles
 
     for key in path[:-1]:
         if key in current:
@@ -687,8 +682,8 @@ async def set_value(ctx, *args) -> discord.Message:
 
     try:
 
-        await save_json_files(necessary_files[path[0]]["message"], necessary_files[path[0]]["filename"],
-                              necessary_files[path[0]]['data'])
+        await save_json_files(NecessaryFiles[path[0]]["message"], NecessaryFiles[path[0]]["filename"],
+                              NecessaryFiles[path[0]]['data'])
     except KeyError as e:
         raise e
 
@@ -724,10 +719,10 @@ async def save_json_files(old_message: discord.Message, filename: str, file_data
 
     message_ = await bot_data_channel.send(files=attachments)
 
-    for key in necessary_files.keys():
+    for key in NecessaryFiles.keys():
         for attachment in old_message.attachments:
-            if attachment.filename == necessary_files[key]["filename"]:
-                necessary_files[key]["message"] = message_
+            if attachment.filename == NecessaryFiles[key]["filename"]:
+                NecessaryFiles[key]["message"] = message_
 
     await old_message.delete()
 
@@ -755,8 +750,8 @@ async def on_member_update(before, after):
                 await member.send(
                     f"Your name {after.nick} was flagged by our moderation system. Please remember to "
                     "keep the server safe for everyone.")
-                if necessary_files["hyperparams"]['data']["logging_channel_id"]:
-                    await before.guild.get_channel(necessary_files["hyperparams"]['data']["logging_channel_id"]).send(
+                if NecessaryFiles["hyperparams"]['data']["logging_channel_id"]:
+                    await before.guild.get_channel(NecessaryFiles["hyperparams"]['data']["logging_channel_id"]).send(
                         f'"{after.nick}" was flagged. User was {before.nick}')
 
         else:
@@ -765,7 +760,7 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_message(message):
-    global ready, bot_data_channel, hyperparams, function_permissions, necessary_files, openai_api_message_id, function_permissions_message_id, member_details, member_details_message_id
+    global ready, bot_data_channel, hyperparams, function_permissions, NecessaryFiles, openai_api_message_id, function_permissions_message_id, member_details, member_details_message_id
 
     # This line is necessary to process commands.
     await client.process_commands(message)
@@ -941,7 +936,7 @@ async def on_message(message):
 
 
 async def member_ids(guild):
-    global necessary_files
+    global NecessaryFiles
     # Load existing members from the JSON file
 
     # Fetch all members
