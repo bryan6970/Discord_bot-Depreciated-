@@ -4,6 +4,8 @@
 "gpt4": {"Definition":"`!gpt4 <QUERY>` Ask GPT4 a question. Image upload should be supported soon","min_role_id":  1176443510409396294, "min_role_name":  "topG"},
 "OFF": {"Definition":"`!OFF <FEATURE>` Turn off a feature. Features include `jokes`","min_role_id":  1176470307960258620, "min_role_name":  "admin"},
 "ON": {"Definition":"`!ON <FEATURE>` Turn on a feature. Features include  `jokes`","min_role_id":  1176470307960258620,"min_role_name":  "admin"},
+  "oi":{"Definition": "`!oi <message>` Treats the current message as a joke message","min_role_id":  null},
+
 "timeout": {"Definition":"`!timeout <MEMBER> <SECONDS> <MINUTES> <HOURS> <DAYS> <REASON>`. Timeouts a user for a specific time. Duration is calculated based on the seconds, minutes, hours, and days provided. Reason is optional","min_role_id":  1176470307960258620,"min_role_name":  "admin"},
   "set_value":{"Definition":"`!set_value <*PATH> <VALUE>. Changes the value of a parameter in the path. This is used to change value in the bot data section","min_role_id":  1176470307960258620,"min_role_name":  "admin"}
 }

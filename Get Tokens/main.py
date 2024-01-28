@@ -45,13 +45,16 @@ def play_partial_sound(sound_file_path, duration_seconds=5):
 captcha_pixel = (34, 34, 34)
 bg_color = (31, 33, 41)
 
-while True:
+captcha_count = 0
+
+while captcha_count <= 2:
     if not paused:
         pyautogui.moveTo(x=1102, y=521)
         if pyautogui.pixel(1102, 521) == captcha_pixel:
             pyautogui.click()
             play_partial_sound('mixkit-spaceship-alarm-998.wav')
             print("captcha detected")
+            captcha_count += 1
             time.sleep(3)
             while pyautogui.pixel(1325, 474) != bg_color:
                 time.sleep(1)

@@ -1,6 +1,7 @@
 {"SETX":  {"approved_role_id":{ }, "permissions" : null},
 "val":  {"approved_role_id":{ }, "permissions" : null},
 "jokes": {"approved_role_id":{ }, "permissions" : null},
+"oi": {"approved_role_id":{ }, "permissions" : null},
 "gpt3": {"approved_role_id":{ }, "permissions" : "administrator"},
 "gpt4": {"approved_role_id":{ }, "permissions" : "administrator"},
 "gpt4_vision": {"approved_role_id":{ }, "permissions" : "administrator"},
