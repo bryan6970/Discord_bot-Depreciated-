@@ -41,14 +41,14 @@ intents.guilds = True
 intents.members = True
 
 # Common IDs
-test_channel_id = 1176446310015041618
-admin_channel_id = 1180059589413183498
+test_channel_id = YOUR TEST CHANNEL KEY
+admin_channel_id = YOUR ADMIN CHANNEL KEY
 
-jet_id = 765462282079043628
-wee_shen_id = 940251593780113530
-jared_id = 1021668580481306684
-benjamin_id = 932171028359180298
-bryan_id = 883252262082850827
+jet_id = REMOVED 
+wee_shen_id = REMOVED
+jared_id = REMOVED
+benjamin_id = REMOVED
+bryan_id = REMOVED
 
 # Type hint for the "message" key
 MessageOrNone = Union[discord.Message, None]
