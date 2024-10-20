@@ -38,7 +38,7 @@ with open("bot_refined.py", "r") as f:
     data = remove(data, 'self.classifier = pipeline("text-classification", model="KoalaAI/Text-Moderation")')
     data = data.replace('outputs = client.classifier(after.nick)', "raise NotImplementedError")
     data = data.replace('client.run(os.environ.get("DISCORD_BOT_TOKEN"))',
-                        'client.run("MTE3NjQ0ODIzOTM5OTA3NTkxMA.G2Y4R-.5vWMTXvjoVyXLr-GwCj0lgMJBcR2tE2I9LA_bg")')
+                        'client.run("YOUR CLIENT TOKEN")')
 
     # for line in massive_chunk.split("\n"):
     #     data = remove(data, line)
